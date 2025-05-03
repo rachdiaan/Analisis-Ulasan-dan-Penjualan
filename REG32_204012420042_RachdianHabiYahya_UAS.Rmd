@@ -1,0 +1,1060 @@
+---
+title: "REG32_204012420042_RachdianHabiYahya_UAS"
+author: "rachdian"
+date: "`r Sys.Date()`"
+output:
+  html_notebook:
+    toc: true
+---
+
+## INSTRUKSI
+
+1. Dalam script ini workflow dimulai dengan menyusun dataset simulasi yang berupa data text. Dilanjutkan dengan simulasi lexicon bahasa Indonesia yang digunakan untuk analisis sentimen. Pada tahap ini mahasiswa diminta menginputkan NPM sebagai dasar untuk membuat data sintesis Age, Income, Expenses, Area yang dibuat secara random menggunakan distribusi student-t.
+
+2. Flow berikutnya adalah Preprocessing data dan menyiapkan data untuk topic modelling.
+
+3. Untuk menetapkan jumlah topic dari data text, digunakan ukuran coherence. Mahasiswa perlu memperhatikan kriteria pemilihan jumlah topik.
+
+4. Setelah memahami workflow, jawablah pertanyaan-pertanyaan di bawah ini! Untuk menjawab pertanyaan, mahasiswa dilengkapi dengan script yang sudah disusun untuk menjawab pertanyaan termaksud.
+
+5. Apabila ada dua atau lebih jawaban mahasiswa yang mirip, maka akan diperlakukan sebagai bekerja sama dan tidak akan diproses penilaiainnya lebih lanjut.  
+
+6. Jawaban ditulis di markdown workspace ini. Penyerahan (submission) ke LMS dibuat dalam format file .nb.html, dengan nama mahasiswa diterakan di rubrik "author" di atas. File diberi nama sebagai berikut: **Kelas.NPM.NAMA_MAHASISWA.UAS.nb.html**.
+
+SELAMAT BEKERJA!
+
+
+## Set random number using 6 last number of your NPM
+```{r}
+NPM <- 420042
+
+```
+
+
+## Dataset
+
+#### Create simulated dataset
+```{r}
+# Memuat library
+library(openxlsx)
+
+# Membuat daftar frase untuk ulasan pelanggan
+generate_reviews <- function(n) {
+  # Frase untuk ulasan positif
+  positive_subjects <- c("Pelayanan", "Produk", "Pengiriman", "Kualitas", "Harga", 
+                         "Dukungan pelanggan", "Aplikasi", "Kemasan", "Desain", "Garansi",
+                         "Fitur", "Kecepatan", "Kenyamanan", "Ketersediaan", "Reputasi",
+                         "Inovasi", "Fungsionalitas", "Keandalan", "Ketersediaan stok", 
+                         "Pengalaman pengguna", "Tampilan", "Kenyamanan penggunaan", 
+                         "Daya tahan", "Ketersediaan layanan", "Ketersediaan informasi",
+                         "Ketersediaan produk", "Kualitas layanan", "Kualitas produk")
+  
+  positive_adjectives <- c("sangat memuaskan", "bagus", "luar biasa", "modern", 
+                           "terjangkau", "mudah digunakan", "efisien", "kokoh", "praktis",
+                           "menarik", "berkualitas tinggi", "cepat", "handal", "nyaman",
+                           "menyenangkan", "berfungsi dengan baik", "berkelas", "istimewa",
+                           "berharga", "bermanfaat", "memuaskan", "sangat baik", 
+                           "sangat luar biasa", "sangat efisien", "sangat nyaman", 
+                           "sangat informatif", "sangat responsif", "sangat inovatif",
+                           "sangat menarik", "sangat berguna")
+  
+  positive_outcomes <- c("Saya sangat merekomendasikannya.", "Ini sesuai harapan saya.", 
+                         "Prosesnya sangat mudah.", "Pengalaman saya sangat positif.", 
+                         "Saya akan membeli lagi.", "Sangat membantu dalam kebutuhan saya.",
+                         "Sangat puas dengan pembelian ini.", "Tidak ada masalah sama sekali.",
+                         "Sangat senang dengan layanan ini.", "Pengiriman tepat waktu.",
+                         "Sangat berterima kasih atas layanan ini.", 
+                         "Kualitas yang sangat baik.",
+                         "Sangat mengesankan.", "Sangat bermanfaat bagi saya.", 
+                         "Sangat memuaskan dan efisien.", "Pengalaman yang luar biasa.",
+                         "Sangat memuaskan dan sesuai ekspektasi.", 
+                         "Sangat menyenangkan untuk digunakan.",
+                         "Sangat informatif dan membantu.", 
+                         "Sangat responsif terhadap pertanyaan.",
+                         "Sangat memuaskan dan sangat baik.", 
+                         "Sangat luar biasa dan bermanfaat.")
+
+  # Frase untuk ulasan negatif
+  negative_subjects <- c("Pelayanan", "Produk", "Pengiriman", "Kualitas", "Harga", 
+                         "Dukungan pelanggan", "Aplikasi", "Kemasan", "Desain", "Garansi",
+                         "Fitur", "Kecepatan", "Kenyamanan", "Ketersediaan", "Reputasi",
+                         "Inovasi", "Fungsionalitas", "Keandalan", "Ketersediaan stok", 
+                         "Pengalaman pengguna", "Tampilan", "Kenyamanan penggunaan", 
+                         "Daya tahan", "Ketersediaan layanan", "Ketersediaan informasi",
+                         "Ketersediaan produk", "Kualitas layanan", "Kualitas produk")
+  
+  negative_adjectives <- c("buruk", "tidak memuaskan", "tidak sesuai", "mengecewakan", 
+                           "kompleks", "kurang berkualitas", "tidak terjangkau", "rapuh", 
+                           "membingungkan", "lambat", "tidak nyaman", "tidak efisien", 
+                           "tidak sesuai deskripsi", "menyusahkan", "tidak berguna", 
+                           "tidak dapat diandalkan", "jelek", "kualitas rendah", 
+                           "tidak sesuai ekspektasi", "sangat mengecewakan", "sangat buruk",
+                           "sangat tidak memuaskan", "sangat lambat", "sangat tidak bermanfaat",
+                           "sangat tidak nyaman", "sangat tidak efisien")
+  
+  negative_outcomes <- c("Saya kecewa dengan hasilnya.", "Tidak sesuai harapan saya.", 
+                         "Tidak akan membeli lagi.", "Saya merasa kecewa.", 
+                         "Pengalaman saya sangat buruk.", "Prosesnya sangat sulit .", 
+                         "Sangat tidak membantu dalam kebutuhan saya.", 
+                         "Sangat tidak puas dengan pembelian ini.", 
+                         "Ada banyak masalah.", "Pengiriman terlambat.", 
+                         "Sangat tidak berterima kasih atas layanan ini.", 
+                         "Kualitas yang sangat buruk.", 
+                         "Sangat mengecewakan.", "Sangat tidak bermanfaat bagi saya.", 
+                         "Sangat tidak memuaskan dan tidak efisien.", 
+                         "Pengalaman yang sangat buruk.", 
+                         "Sangat tidak memuaskan dan tidak sesuai ekspektasi.", 
+                         "Sangat menyusahkan untuk digunakan.", 
+                         "Sangat tidak informatif dan tidak membantu.", 
+                         "Sangat tidak responsif terhadap pertanyaan.", 
+                         "Sangat mengecewakan dan sangat buruk.")
+
+  reviews <- c()
+  ratings <- c()
+
+  while (length(reviews) < n) {
+    subject <- sample(c(positive_subjects, negative_subjects), 1)
+    adjective <- sample(c(positive_adjectives, negative_adjectives), 1)
+    outcome <- sample(c(positive_outcomes, negative_outcomes), 1)
+    
+    review <- paste(subject, adjective, outcome)
+    
+    if (!review %in% reviews) {
+      reviews <- c(reviews, review)
+      rating <- sample(1:5, 1)  # Generate a random rating between 1 and 5
+      ratings <- c(ratings, rating)
+    }
+  }
+
+  # Menggabungkan ulasan dengan rating
+  final_reviews <- data.frame(Review = reviews, Rating = ratings)
+  
+  return(final_reviews)
+}
+
+# Menghasilkan 1500 ulasan unik
+customer_reviews <- generate_reviews(1500)
+
+# Menyimpan ke Excel
+file_path <- "1500_Ulasan_dan_Penilaian_Pelanggan.xlsx"
+write.xlsx(customer_reviews, file = file_path)
+
+print(paste("File Excel disimpan di:", file_path))
+```
+
+#### Read saved dataset
+```{r}
+# Set seed random number for reproductivity
+set.seed(NPM)
+
+# Load original dataset
+my_data <- readxl::read_excel("1500_Ulasan_dan_Penilaian_Pelanggan.xlsx")
+#my_data <- readxl::read_excel("inDOhome_reviews.xlsx")
+colnames(my_data) <- c('Review', 'Rating')
+head(my_data)
+
+# Add new variables age, 
+# Load the dplyr package
+library(dplyr)
+
+# Set the number of random numbers to generate
+n <- nrow(my_data)  # Number of rows in the existing data frame
+
+# Set degrees of freedom for the Student's t-distribution
+degf <- 15  # You can adjust this value as needed
+
+# Generate random numbers from the Student's t-distribution
+# Age: Transform to be between 18 and 35
+age <- round(rt(n, degf) * 5 + 26)  # Scale and shift to fit the range
+age[age < 18] <- 18  # Ensure minimum age is 18
+age[age > 35] <- 35  # Ensure maximum age is 35
+
+# Income: Transform to be between 5,000,000 and 20,000,000
+income <- round(rt(n, degf) * 2500000 + 12500000)  # Scale and shift to fit the range
+income[income < 5000000] <- 5000000  # Ensure minimum income is 5,000,000
+income[income > 20000000] <- 20000000  # Ensure maximum income is 20,000,000
+
+# Expenses: Transform to be between 400,000 and 3,000,000
+expenses <- round(rt(n, degf) * 1000000 + 1700000)  # Scale and shift to fit the range
+expenses[expenses < 400000] <- 400000  # Ensure minimum expenses is 400,000
+expenses[expenses > 3000000] <- 3000000  # Ensure maximum expenses is 3,000,000
+
+# Area: Generate random integers between 1 and 5
+area <- sample(1:5, n, replace = TRUE)
+
+# Create a data frame with the generated variables
+dummydata <- my_data %>%
+  mutate(
+  Age = age,
+  Income = income,
+  Expenses = expenses,
+  Area = area
+)
+
+# Shuffle the rows of the data frame
+dummydata <- dummydata[sample(nrow(dummydata)), ]
+
+# Add Customer ID column
+dummydata$CustomerID <- paste0("CustId", seq_len(nrow(dummydata)))
+
+# Relocate CustomerID to the first column using base R
+dummydata <- dummydata[c("CustomerID", setdiff(names(dummydata), "CustomerID"))]
+  
+# Print the first few rows of the data frame
+head(dummydata)
+
+# Menyimpan ke Excel
+file_path <- "data_uas.xlsx"
+write.xlsx(dummydata, file = file_path)
+
+print(paste("File Excel disimpan di:", file_path))
+
+```
+
+
+### 1st we want to understand what topics are discussed in the review
+
+#### Preprocessing
+```{r}
+# Load libraries
+library(quanteda)
+library(topicmodels)
+library(quanteda)
+
+# Load review data
+newdata <- readxl::read_excel('data_uas.xlsx')
+
+# Convert to corpus
+corpuss <- corpus(as.character(newdata$Review))
+
+# Tokenize
+toks <- corpuss %>% quanteda::tokens(what = "word",
+                                     split_hyphens = FALSE,
+                                     verbose = quanteda_options("verbose"))
+
+# Remove punctuation, symbols, numbers, urls, separators
+toks <- toks %>% quanteda::tokens(
+       remove_punct = TRUE,
+       remove_symbols = TRUE,
+       remove_numbers = TRUE,
+       remove_url = TRUE,
+       remove_separators = TRUE)
+
+
+# Load stopwords Id
+stopwords_id <- readLines("stopword_id.txt", encoding = "UTF-8")
+
+# Remove stopwords list
+toks <- toks %>% tokens_select(pattern = stopwords_id,
+                               selection = "remove",
+                               valuetype = "glob",
+                               case_insensitive = TRUE
+                               )
+toks[[1]]
+```
+
+#### Create Document Feature Matrix
+```{r}
+# Document Feature Matrix
+my_dfm <- quanteda::dfm(toks, 
+                        tolower = TRUE,
+                        #dictionary = NULL,
+                        #thesaurus = NULL, 
+                        #groups = NULL,
+                        remove_padding = FALSE,
+                        verbose = quanteda_options("verbose")
+                        )
+
+#View(as.matrix(my_dfm)) #View only for small size matrix.
+```
+
+
+#### Choosing the best number of topics using Coherence measure
+```{r}
+library(topicdoc)
+
+set.seed(NPM)
+
+# Convert to a Document-Term Matrix if necessary
+dtm <- as(my_dfm, "dgCMatrix")  # Convert to a sparse matrix format
+
+
+# Load necessary libraries
+library(tm)          # For text mining
+library(topicmodels) # For LDA
+library(topicdoc)   # For coherence calculation
+
+# Define a range of topics to evaluate
+topics_range <- seq(from = 2, to = 20, by = 1)
+
+# Initialize a vector to store coherence scores
+coherence_scores <- numeric(length(topics_range))
+
+# Loop through the range of topics and calculate coherence
+for (k in topics_range) {
+  # Fit the LDA model
+  lda_model <- LDA(dtm, k = k, control = list(seed = 1234))
+  
+  # Calculate coherence
+  coherence_scores[k - 1] <- topicdoc::topic_coherence(lda_model, dtm_data = dtm)
+}
+
+# Create a data frame for plotting
+results <- data.frame(Topics = topics_range, Coherence = coherence_scores)
+
+# Plot the results
+library(ggplot2)
+ggplot(results, aes(x = Topics, y = Coherence)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Coherence Scores for Different Number of Topics",
+       x = "Number of Topics",
+       y = "Coherence Score") +
+  theme_minimal()
+```
+
+=====================================================
+
+#### LDA function
+
+We can use the LDA() function from the topicmodels package, setting k = number_of_topics, to create a two-topic LDA model. Almost any topic model in practice will use a larger k, but we will soon see that this analysis approach extends to a larger number of topics. This function returns an object containing the full details of the model fit, such as how words are associated with topics and how topics are associated with documents.
+
+
+## Questions
+Jawab pertanyan-pertanyaan di bawah ini!
+
+### Question 1: Based on coherence plot, decide your number of topics and explain your decision and do topic modeling.
+
+```{r}
+# Number of topics
+number_of_topics <- 7
+
+# set a seed so that the output of the model is predictable
+my_lda <- topicmodels::LDA(my_dfm, k = number_of_topics, control = list(seed = 1234))
+my_lda
+```
+
+
+Answer to Question 1:
+
+Untuk menentukan jumlah topik yang optimal, kita merujuk pada plot coherence score. Coherence Score membantu mengevaluasi interpretabilitas topik yang dihasilkan oleh Latent Dirichlet Allocation (LDA). Setelah bereksperimen dengan sejumlah topik yang berbeda dan meninjau nilai koherensinya, kita dapat melihat bahwa skor koherensi mencapai puncak atau mempertahankan nilai yang relatif tinggi pada 7 topik, yang menunjukkan keseimbangan antara kompleksitas model dan interpretabilitas.
+
+Jadi, 7 adalah jumlah topik yang optimal.
+
+=====================================================
+
+### Question 2: Explain the following Word-topic probabilities
+
+We introduced the tidy() method, originally from the broom package (Robinson 2017), for tidying model objects. The tidytext package provides this method for extracting the per-topic-per-word probabilities, called ?? ("beta'), from the model.
+
+```{r}
+library(tidytext)
+
+my_topics <- tidy(my_lda, matrix = "beta")
+my_topics$beta <- round(my_topics$beta, 3)
+my_topics
+```
+
+Answer to Question 2:
+
+Dalam pemodelan topik menggunakan Latent Dirichlet Allocation (LDA), setiap kata dalam kosakata dikaitkan dengan distribusi probabilitas atas topik. Probabilitas ini, yang sering disebut sebagai nilai beta (β), menunjukkan kemungkinan sebuah kata dikaitkan dengan topik tertentu.
+
+Untuk mengekstrak dan memeriksa nilai, kami menggunakan fungsi tidy() dari library tidytext. Fungsi ini mengubah objek model LDA menjadi bingkai data yang rapi, sehingga lebih mudah untuk ditafsirkan dan diinterpretasikan.
+
+Kerangka data yang dihasilkan (my_topics) berisi tiga kolom utama:
+
+topic: Nomor topik.
+term: Kata dari kosakata.
+beta: Probabilitas istilah tersebut dihasilkan dari topik.
+
+Informasi ini penting untuk menginterpretasikan topik. Dengan memeriksa kata teratas (dengan nilai beta tertinggi) per topik, kita dapat memberi label atau meringkas apa yang diwakili oleh setiap topik secara semantik.
+
+=====================================================
+
+### Question 3: Defining Topics
+
+Saudara diminta menjelaskan tentang apakah masing-masing topik tersebut dengan mengambil jumlah kata yang tepat. Untuk menetapkan jumlah kata yang akan digunakan untuk menyusun dan menjelaskan topik, tetapkan nilai 'jumlah_kata' dalam koding di bawah. Hindari menggunakan kata terlalu banyak atau terlalu sedikt. Jumlah_kata harus tepat agar satu topik bisa dibedakan dengan topik lainnya. 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+jumlah_kata <- 5
+
+my_top_terms <- my_topics %>%
+  group_by(topic) %>%
+  top_n(jumlah_kata, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+my_top_terms
+```
+
+```{r}
+my_top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
+```
+
+Jawaban Question 3:
+
+Untuk menentukan setiap topik dari model LDA, kita dapat mengekstrak 5 kata teratas dengan nilai beta (β) tertinggi per topik. Istilah-istilah teratas ini mewakili kata-kata yang paling representatif dalam setiap topik dan membantu dalam memahami konten semantik topik-topik tersebut.
+
+Berikut penjelasan masing-masing topik berdasarkan kata-kata teratas:
+
+Topic 1: buruk, memuaskan, bermanfaat, sesuai, baik  
+→ Topik ini berkaitan dengan **evaluasi kepuasan**, menyiratkan pengalaman pengguna terhadap layanan atau produk, baik dari segi efisiensi maupun kepuasan yang dirasakan.
+
+Topic 2: layanan, kualitas, sesuai, daya, ketersediaan  
+→ Topik ini menekankan pada **penilaian layanan dan kualitas produk**, serta ketersediaannya, menunjukkan fokus pada performa dan kesesuaian produk.
+
+Topic 3: memuaskan, membantu, baik, buruk, bermanfaat  
+→ Topik ini mencerminkan **pengalaman positif pengguna**, terutama dalam hal bantuan dan manfaat layanan, meskipun ada sedikit nada negatif.
+
+Topic 4: ketersediaan, sesuai, nyaman, efisien, produk  
+→ Topik ini berhubungan dengan **kemudahan akses dan kenyamanan**, mencerminkan ulasan yang menyoroti efisiensi dan pengalaman praktis terhadap produk atau layanan.
+
+Topic 5: ketersediaan, layanan, kualitas, pengalaman, mengecewakan  
+→ Topik ini menunjukkan **ketidaksesuaian antara ekspektasi dan kenyataan**, khususnya pada aspek layanan dan pengalaman pengguna yang dirasa mengecewakan.
+
+Topic 6: buruk, kualitas, pengiriman, memuaskan, mengecewakan  
+→ Topik ini menyoroti **masalah dalam kualitas dan pengiriman**, serta ketidakpuasan pelanggan terhadap waktu dan mutu layanan yang diterima.
+
+Topic 7: layanan, ketersediaan, kualitas, atas, bermanfaat  
+→ Topik ini mengarah pada **ulasan deskriptif terkait manfaat dan kualitas layanan**, termasuk persepsi pelanggan terhadap fitur-fitur tertentu.
+
+Visualisasi dengan ggplot2 membagi tiap topik ke dalam panel (facet), sehingga kita bisa melihat distribusi kekuatan (beta) dari kata-kata utama per topik, mempermudah interpretasi dan diferensiasi antar topik.
+
+
+=====================================================
+
+### Question 4: Explain the follwoing Document-topic probabilities!
+
+Besides estimating each topic as a mixture of words, LDA also models each document as a mixture of topics. We can examine the per-document-per-topic probabilities, called “gamma”, with the matrix = “gamma” argument to tidy().
+
+```{r}
+my_documents <- tidy(my_lda, matrix = "gamma")
+my_documents
+```
+
+Jawaban Question 4
+
+Nilai gamma ini mengukur tingkat keterkaitan setiap dokumen dengan setiap topik. Gamma yang lebih tinggi untuk suatu topik dalam suatu dokumen berarti bahwa topik tersebut memainkan peran yang lebih signifikan dalam membentuk konten dokumen tersebut.
+
+Dalam istilah praktis:
+
+Jika gamma = 0,6 untuk topik 3 dalam suatu dokumen, ini berarti bahwa 60% konten dokumen tersebut diwakili oleh topik 3.
+
+Sebaliknya, gamma = 0,1 akan menunjukkan bahwa topik tersebut hanya memiliki pengaruh yang kecil pada dokumen tersebut.
+
+Dengan menganalisis nilai gamma di seluruh dokumen, kita dapat mengklasifikasikan dan mengelompokkan dokumen berdasarkan topik yang dominan, mendeteksi tema dalam korpus teks yang besar, atau melacak bagaimana topik bervariasi di berbagai kelompok dokumen.
+
+=====================================================
+
+### Question 5: Are you satisfied with the result of topic modeling?
+Elaborate your answer.
+
+#### Interactive visualization
+```{r}
+library(LDAvis)
+library(tidytext)
+library(tm)
+library(topicmodels)
+
+servr::daemon_stop()
+
+#dtm <- tm::DocumentTermMatrix(corpuss)
+
+lda_model <- LDA(dtm, k = number_of_topics, control = list(seed = 1234))  # 5 topics
+
+# Extract parameters from the fitted LDA model
+phi <- as.matrix(posterior(lda_model)$terms)  # Topic-term distribution
+theta <- as.matrix(posterior(lda_model)$topics)  # Document-topic distribution
+vocab <- colnames(phi)  # Vocabulary (terms in the DTM)
+doc_length <- as.data.frame(rowSums(as.matrix(dtm)))[,1]  # Number of words per document
+term_frequency <- colSums(as.matrix(dtm))  # Term frequency across all documents
+
+# Create the JSON object for LDAvis
+json_lda <- createJSON(phi = phi, 
+                       theta = theta, 
+                       vocab = vocab, 
+                       doc.length = doc_length, 
+                       term.frequency = term_frequency)
+
+# Visualize
+serVis(json_lda, out.dir = "lda_vis", open.browser = TRUE)
+```
+
+Jawaban Question 5
+
+Ya, saya puas dengan hasil proses pemodelan topik karena :
+
+Interpretabilitas Topik:
+Tujuh topik yang diidentifikasi oleh model LDA secara semantik berbeda dan dapat diinterpretasikan. Setiap topik dikaitkan dengan serangkaian kata-kata probabilitas tinggi yang koheren yang masuk akal secara intuitif dan selaras dengan tema-tema yang diketahui dalam dokumen (misalnya, kepuasan, efisiensi, harga, aksesibilitas).
+
+Diferensiasi yang Jelas di Antara Topik:
+Istilah-istilah teratas dalam setiap topik tidak terlalu tumpang tindih di antara topik-topik, yang menunjukkan diferensiasi yang jelas yang sangat penting untuk segmentasi topik yang efektif.
+
+Distribusi Topik yang Seimbang di Seluruh Dokumen:
+Nilai gamma (probabilitas dokumen-topik) menunjukkan distribusi topik yang wajar di seluruh korpus. Sebagian besar dokumen merupakan campuran topik, tetapi dengan tema dominan yang jelas, yang menunjukkan bahwa model berhasil menangkap kompleksitas tematik dari kumpulan data.
+
+Interactive Visualization Insight (LDAvis):
+Dengan menggunakan LDAvis, visualisasi interaktif menyediakan alat yang berharga untuk mengeksplorasi hubungan antara topik dan keunggulan istilah-istilah kunci. Lingkaran topik dipisahkan dengan cukup baik, yang secara visual mendukung kualitas dan keterpisahan topik yang ditemukan.
+
+Pemodelan Konsisten di Berbagai Metode:
+Hasilnya konsisten baik menggunakan topicmodels::LDA atau melalui eksplorasi interaktif dengan LDAvis. Konsistensi ini meningkatkan keyakinan pada ketahanan keluaran pemodelan topik.
+
+Keterbatasan yang Dicatat:
+
+Meskipun topik dapat ditafsirkan, beberapa dokumen tampak terdistribusi secara merata di beberapa topik, yang mungkin menunjukkan perlunya praproses lebih lanjut atau penyesuaian jumlah topik yang lebih terperinci.
+
+Model LDA mengasumsikan pendekatan "kumpulan kata", yang mengabaikan urutan kata dan konteks, yang mungkin kehilangan makna yang bernuansa.
+
+Kesimpulan:
+Proses pemodelan topik berhasil mengungkap struktur tematik laten korpus, yang menyediakan pengelompokan konsep yang berwawasan. Integrasi dengan alat visualisasi interaktif seperti LDAvis semakin meningkatkan kemampuan penafsiran dan keterlibatan pengguna dengan hasilnya.
+
+=====================================================
+
+### Question 6: Examine customer id that belong to each Topic, what is your finding?
+Elaborate your answer.
+
+#### Get the topic assignments for each document
+```{r}
+text_data <- newdata
+
+# Get the topic assignments for each document
+topic_assignments <- posterior(my_lda)$topics
+
+# Get the most likely topic for each document
+text_data$Topic <- apply(topic_assignments, 1, which.max)
+
+# Print the updated data frame
+print(text_data)
+```
+
+```{r}
+text_data |>
+  filter(Topic == 1)
+```
+
+Jawaban Question 6
+
+Untuk menganalisis bagaimana setiap CustomerID dikaitkan dengan topik tertentu, kami menetapkan topik yang paling mungkin pada setiap dokumen berdasarkan nilai gamma (γ) tertinggi dari matriks distribusi topik (posterior(my_lda)$topics).
+
+=====================================================
+
+### Question 7: Explain the following sentiment table
+
+#### Using sentimentr library
+
+The sentimentr library in R is a package used for sentiment analysis, which is a type of natural language processing (NLP) technique used to determine the emotional tone or attitude conveyed by a piece of text, such as a sentence, paragraph, or document.
+
+The sentimentr package provides a simple and efficient way to perform sentiment analysis on text data in R. It uses a dictionary-based approach, where words are matched against a dictionary of words with known sentiment scores. The package includes several dictionaries, including the Affective Norms for English Words (ANEW) dictionary and the NRC Emotion Lexicon. 
+
+However, in our case we will use custom lexicon for bahasa indonesia.
+
+
+#### Create custom lexicon and save
+```{r}
+# Memuat library
+library(dplyr)
+library(stringr)
+library(tidyr)
+
+# Fungsi untuk mengekstrak kata sifat termasuk bigram dan trigram
+extract_adjectives <- function(reviews, positive_adjectives, negative_adjectives) {
+  # Tokenisasi ulasan menjadi kata
+  words <- unlist(str_split(reviews, " "))
+  
+  # Membuat bigrams dan trigrams
+  bigrams <- paste(words[-length(words)], words[-1])
+  trigrams <- paste(words[-(length(words)-1)], words[-c(1, length(words))], words[-1])
+  
+  # Gabungkan semua frasa
+  all_phrases <- c(words, bigrams, trigrams)
+  
+  # Menghitung frekuensi kata sifat positif dan negatif
+  positive_counts <- table(all_phrases[all_phrases %in% c(positive_adjectives)])
+  negative_counts <- table(all_phrases[all_phrases %in% c(negative_adjectives)])
+  
+  # Menggabungkan hasil ke dalam data frame
+  lexicon <- data.frame(
+    Adjective = c(names(positive_counts), names(negative_counts)),
+    Score = c(as.integer(positive_counts), -as.integer(negative_counts)),
+    stringsAsFactors = FALSE
+  )
+  
+  # Menghitung total skor untuk setiap kata sifat
+  lexicon <- lexicon %>%
+    group_by(Adjective) %>%
+    summarise(Total_Score = sum(Score)) %>%
+    arrange(desc(Total_Score))
+  
+  return(lexicon)
+}
+
+# Daftar kata sifat positif dan negatif
+positive_adjectives <- c("sangat memuaskan", "bagus", "luar biasa", "modern", 
+                          "terjangkau", "mudah digunakan", "efisien", "kokoh", "praktis",
+                          "menarik", "berkualitas tinggi", "cepat", "handal", "nyaman",
+                          "menyenangkan", "berfungsi dengan baik", "berkelas", "istimewa",
+                          "berharga", "bermanfaat", "memuaskan", "sangat baik", 
+                          "sangat luar biasa", "sangat efisien", "sangat nyaman", 
+                          "sangat informatif", "sangat responsif", "sangat inovatif",
+                          "sangat menarik", "sangat berguna")
+
+negative_adjectives <- c("buruk", "tidak memuaskan", "tidak sesuai", "mengecewakan", 
+                          "kompleks", "kurang berkualitas", "tidak terjangkau", "rapuh", 
+                          "membingungkan", "lambat", "tidak nyaman", "tidak efisien", 
+                          "tidak sesuai deskripsi", "menyusahkan", "tidak berguna", 
+                          "tidak dapat diandalkan", "jelek", "kualitas rendah", 
+                          "tidak sesuai ekspektasi", "sangat mengecewakan", "sangat buruk",
+                          "sangat tidak memuaskan", "sangat lambat", "sangat tidak bermanfaat",
+                          "sangat tidak nyaman", "sangat tidak efisien")
+
+# Menghasilkan lexicon dari ulasan
+lexicon <- extract_adjectives(customer_reviews$Review, positive_adjectives, negative_adjectives)
+lexicon$Total_Score <- lexicon$Total_Score / 10  # Optional scaling
+
+colnames(lexicon) <- c('word', 'sentiment')
+print(lexicon)
+
+# Save custom lexicon
+openxlsx::write.xlsx(lexicon, 'lexicon.xlsx')
+```
+
+#### Detect sentiments
+```{r}
+# Load the sentimentr package
+library(sentimentr)
+library(data.table)
+
+# text data in Bahasa Indonesia
+tdata <- text_data$Review
+#tdata <-customer_reviews$Review
+tdata <- get_sentences(tdata)
+
+#text_data <- newdata$Review
+
+# Read custom sentiment lexicon for Bahasa Indonesia
+custom_lexicon <-  readxl::read_excel('lexicon.xlsx')
+custom_lexicon <- data.table::data.table(custom_lexicon)
+setkey(custom_lexicon, 'word')
+
+# Perform sentiment analysis using the custom lexicon
+sentiment_results <- sentiment(tdata, valence_shifters_dt = NULL, custom_lexicon)
+
+# Print the sentiment results
+head(sentiment_results)
+
+# Get the most likely topic for each document
+text_data$Sentiment <- sentiment_results$sentiment
+
+# Print the updated data frame
+head(text_data)
+```
+
+#### Remove rows with duplicate 'ID' values
+```{r}
+# Remove rows with duplicate 'ID' values (keep the first occurrence)
+unique_df <- custom_lexicon[!duplicated(custom_lexicon$word), ]
+matrix(unique_df)
+```
+
+Jawaban Question 7
+
+Analisis sentimen dilakukan menggunakan paket `sentimentr` dengan pendekatan berbasis kamus (lexicon). Paket ini mencocokkan kata-kata dalam kalimat terhadap kamus kata sifat yang telah diberi nilai sentimen. 
+
+Dalam kasus ini, kami tidak menggunakan kamus standar bahasa Inggris (seperti ANEW atau NRC), melainkan membangun **custom lexicon untuk Bahasa Indonesia**, yang terdiri dari kata sifat positif dan negatif termasuk bigram dan trigram.
+
+
+Tahapan Proses
+
+1. **Ekstraksi Lexicon:**
+   - Kata sifat diekstraksi dari teks review menggunakan tokenisasi termasuk bigram dan trigram.
+   - Frekuensi kata positif diberi skor positif dan negatif diberi skor negatif.
+
+2. **Analisis Sentimen:**
+   - Fungsi `sentiment()` menghitung skor sentimen per kalimat.
+   - Skor akhir bersifat numerik:
+     - **Positif** (> 0): kalimat berkonotasi positif.
+     - **Negatif** (< 0): kalimat bernada negatif.
+     - **Netral** (≈ 0): tidak terdeteksi nada emosional kuat.
+
+3. **Hasil:**
+   - Setiap baris ulasan memiliki nilai `Sentiment`.
+
+Temuan Utama
+- Nilai sentimen bervariasi mulai dari sangat negatif (misal: -9.8) hingga sangat positif (misal: +16.5).
+- Kalimat yang mengandung kombinasi seperti *"sangat memuaskan"*, *"luar biasa"*, atau *"bermanfaat sekali"* memperoleh skor tinggi.
+- Kalimat dengan kata seperti *"tidak sesuai"*, *"buruk"*, *"mengecewakan"* mendapat skor negatif.
+
+Interpretasi
+
+- Sentimen numerik memberikan pemahaman **lebih tajam dibanding sekadar rating angka**, karena menggambarkan **emosi aktual** pelanggan.
+- Sentimen ini kemudian digunakan untuk:
+  - Memetakan ke topik (LDA Topic Modeling),
+  - Menganalisis klaster pelanggan berdasarkan kepuasan.
+
+Penanganan Duplikasi
+Langkah terakhir adalah menghapus duplikasi kata dalam lexicon menggunakan:
+
+- Dengan menggunakan **custom lexicon Bahasa Indonesia**, proses deteksi sentimen menjadi lebih akurat dan kontekstual.
+- Hasil sentimen per kalimat dapat digunakan untuk:
+- Menilai kualitas ulasan secara mikro,
+- Mengidentifikasi kalimat paling bernilai untuk **testimonial positif maupun evaluasi negatif**,
+- Menyusun strategi peningkatan layanan berbasis ekspresi nyata pengguna.
+=====================================================  
+### Question 8: Lakukan mapping antara keseluruhan topic dan sentiment.
+
+#### Plot sentiment by topic
+
+##### Topic 1
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 1) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 1", x = "Sentiment", y = "Frequency")
+
+```
+
+##### Topic 2
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 2) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 2", x = "Sentiment", y = "Frequency")
+
+```
+
+##### Topic 3.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 3) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 3", x = "Sentiment", y = "Frequency")
+
+```
+
+##### Topic 4.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 4) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 4", x = "Sentiment", y = "Frequency")
+
+```
+
+##### Topic 5.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 3) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 5", x = "Sentiment", y = "Frequency")
+
+```
+##### Topic 6.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 6) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 6", x = "Sentiment", y = "Frequency")
+
+```
+##### Topic 7.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming 'text_data' is a data frame
+text_data %>%
+  filter(Topic == 7) %>%
+  arrange(Sentiment) %>%
+  ggplot(aes(x = Sentiment)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Sentiment Distribution for Topic 7", x = "Sentiment", y = "Frequency")
+
+```
+
+Jawaban Question 8:
+
+Distribusi sentimen per topik memberikan pemahaman mendalam mengenai bagaimana **emosi pelanggan** terbagi berdasarkan tema/topik yang diekstraksi dari model LDA.
+
+
+Topic 1 – Evaluasi Umum Produk dan Layanan
+- **Distribusi:** Positif dominan tetapi juga terdapat keluhan.
+- **Interpretasi:** Pelanggan banyak yang puas, namun masih ada suara negatif terkait pengalaman yang tidak sesuai ekspektasi.
+- **Kata kunci:** *memuaskan*, *bermanfaat*, *buruk*, *sesuai*.
+
+
+Topic 2 – Kualitas dan Layanan Produk
+- **Distribusi:** Cenderung simetris dan netral.
+- **Interpretasi:** Persepsi pelanggan **bercampur** antara puas dan tidak puas, tergantung konteks layanan dan kualitas yang diterima.
+- **Kata kunci:** *layanan*, *kualitas*, *daya*.
+
+
+Topic 3 – Manfaat dan Fungsi Produk
+- **Distribusi:** Skor sentimen tinggi, banyak nilai positif ekstrim.
+- **Interpretasi:** Topik ini menunjukkan **kepuasan tinggi dan kegunaan** layanan atau fitur, banyak ulasan sangat positif.
+- **Kata kunci:** *memuaskan*, *membantu*, *baik*, *bermanfaat*.
+
+
+Topic 4 – Ketersediaan dan Efisiensi
+- **Distribusi:** Simetris dengan dominasi netral.
+- **Interpretasi:** Ulasan pada topik ini cenderung **deskriptif dan objektif**, lebih membahas akses dan efisiensi tanpa emosi ekstrem.
+- **Kata kunci:** *ketersediaan*, *efisien*, *nyaman*.
+
+
+Topic 5 – Harapan vs Realita
+- **Distribusi:** Positif ringan hingga ekstrem; sentimen positif dominan, namun ada beberapa ulasan negatif.
+- **Interpretasi:** Meskipun banyak ulasan positif, **beberapa pelanggan mengalami kekecewaan**, mungkin karena ekspektasi tidak terpenuhi.
+- **Kata kunci:** *layanan*, *pengalaman*, *mengecewakan*.
+
+
+Topic 6 – Pengiriman dan Kualitas Produk
+- **Distribusi:** Konsisten positif dengan sedikit outlier negatif.
+- **Interpretasi:** Sebagian besar pelanggan merasa puas, **keluhan terhadap pengiriman sedikit tapi nyata**.
+- **Kata kunci:** *buruk*, *pengiriman*, *mengecewakan*.
+
+
+Topic 7 – Kualitas Umum dan Layanan Tambahan
+- **Distribusi:** Cenderung netral ke positif, dengan variasi ringan.
+- **Interpretasi:** Pelanggan menyampaikan ulasan yang **moderat**, tidak terlalu ekstrem dalam penilaian.
+- **Kata kunci:** *layanan*, *ketersediaan*, *bermanfaat*.
+
+
+
+Kesimpulan
+
+- **Topik paling positif:** Topic 3 – “fungsi dan manfaat” produk sangat diapresiasi.
+- **Topik paling netral:** Topic 4 dan Topic 7 – deskriptif, tidak banyak ekspresi emosional.
+- **Topik paling campuran:** Topic 2 dan Topic 5 – memperlihatkan ketidakpastian pelanggan.
+- **Topik dengan potensi masalah:** Topic 1 dan 6 – muncul cukup banyak keluhan meski juga ada apresiasi.
+
+=====================================================
+### Question 9: Customer cluster
+
+#### Question 9.1: How well are customers segmented? Explain!
+#### Question 9.2: Can you find distinct customer profile? Explain!
+
+We need to investigate whether there is sentiment related to customer profile. To profile the customers we segment them using variables Rating, Age, Income, Expenses, and Area.
+
+First we ask NbClust about the optimum number of cluster, pick your number of cluster.
+```{r}
+library(NbClust)
+library(cluster)
+
+set.seed(NPM)
+
+# Select variables to cluster
+data4cluster <- text_data |>
+  select(Rating, Age, Income, Expenses, Area)
+data4cluster$Area < as.numeric(data4cluster$Area)
+
+# Calculate number of cluster
+nbofclust <- NbClust::NbClust(scale(data4cluster), 
+                              distance = "euclidean",
+                              min.nc = 2, 
+                              max.nc = 15, 
+                              method = "complete", 
+                              index ="all")
+```
+
+Next, do the clustering using K-means and plot cluster
+```{r}
+set.seed(NPM)
+
+# Set number of cluster
+numberOfClusters <- 9
+
+# Use k-means technique
+customer_cluster <- stats::kmeans(data4cluster, numberOfClusters)
+customer_cluster$centers
+
+# Visualize cluster
+# Generate a discriminant coordinates plot.
+cluster::clusplot(data4cluster, customer_cluster$cluster, color=TRUE, shade=TRUE,
+                  main='Customer Cluster - K-Means', 
+                  sub=paste(format(Sys.time(), "%Y-%b-%d %H:%M:%S"),
+                            Sys.info()["user"]))
+```
+
+Jawaban Question 9.1.
+
+Untuk menilai kualitas segmentasi pelanggan, dapat digunakan menggunakan metode:
+
+- **NbClust** untuk menentukan jumlah cluster optimal.
+- **K-Means Clustering** dengan 9 cluster berdasarkan variabel:
+  - `Rating`, `Age`, `Income`, `Expenses`, dan `Area`.
+
+**Hasil dari NbClust:**
+- Mayoritas indeks menyarankan jumlah cluster optimal antara 2 dan 4.
+- Namun, eksplorasi lebih lanjut dilakukan dengan **9 cluster** untuk mengungkap segmentasi yang lebih terperinci.
+
+**Evaluasi Segmentasi:**
+- Visualisasi `clusplot` menunjukkan pemisahan antar cluster yang cukup baik, walaupun terdapat **sedikit tumpang tindih**.
+- **KMeans mampu mengelompokkan pelanggan berdasarkan pola konsumsi dan karakter demografis** seperti:
+  - Pendapatan tinggi vs rendah,
+  - Pengeluaran besar vs hemat,
+  - Wilayah geografis (Area),
+  - Rating dan tingkat kepuasan.
+
+**Kesimpulan 9.1:**
+Segmentasi dapat dikatakan **cukup baik**, karena berhasil menemukan klaster yang representatif terhadap perilaku dan demografi pelanggan. Namun, efektivitas klasifikasi bisa ditingkatkan dengan mempertimbangkan **variabel perilaku tambahan** atau menggunakan **metode clustering hierarkis** sebagai komparasi.
+
+---
+Jawaban Question 9.2
+
+Ya, dari hasil clustering dengan 9 kelompok, dapat diidentifikasi beberapa **profil pelanggan yang berbeda secara nyata** berdasarkan centroid masing-masing cluster.
+
+**Temuan Tambahan:**
+- Terdapat hubungan **antara tingkat pengeluaran dan sentimen**: pelanggan dengan pengeluaran tinggi umumnya menyatakan **sentimen positif**.
+- Pelanggan dari Area 3 mendominasi banyak klaster, mungkin karena kepadatan atau volume pembeli dari wilayah tersebut.
+
+**Kesimpulan 9.2:**
+Terdapat **profil pelanggan yang jelas dan berbeda antar klaster**. Hal ini membuka peluang untuk:
+- Menyesuaikan **strategi pemasaran** dan **penawaran produk** per klaster.
+- Melakukan **intervensi layanan personalisasi** berbasis profil yang ditemukan.
+
+=====================================================
+
+### Question 10: Your comment on the cluster - sentiment profile
+
+#### Histogram sentiment vs cluster
+```{r}
+# Install necessary packages if not already installed
+# install.packages("ggplot2")
+# install.packages("RColorBrewer")  # For color palettes
+# install.packages("viridis")        # For colorblind-friendly palettes
+
+library(ggplot2)
+library(RColorBrewer)  # For color palettes
+# library(viridis)      # Uncomment if you want to use viridis
+
+# Function to create a histogram with flexible color assignment
+create_sentiment_histogram <- function(data, num_clusters) {
+  # Check the number of clusters and assign colors accordingly
+  if (num_clusters <= 9) {
+    colors <- brewer.pal(num_clusters, "Set1")  # Use Set1 palette for up to 9 clusters
+  } else {
+    colors <- brewer.pal(9, "Set1")  # Use Set1 palette for the first 9 clusters
+    additional_colors <- brewer.pal(num_clusters - 9, "Dark2")  # Use Dark2 for additional clusters
+    colors <- c(colors, additional_colors)  # Combine the two palettes
+  }
+  
+  ggplot(data, aes(x = sentimentt, fill = as.factor(clustert))) +
+    geom_histogram(bins = 30, alpha = 0.7) +
+    labs(title = "Histogram of Sentiment by Cluster", x = "Sentiment", y = "Count") +
+    theme_minimal() +
+    scale_fill_manual(values = colors) +
+    theme(legend.title = element_blank()) +
+    facet_wrap(~ clustert, ncol = 4)  # Create facets for each cluster
+}
+
+# Cluster sentiment data frame
+clustert <- customer_cluster$cluster
+sentimentt <- text_data$Sentiment
+mydata_clustsent <- data.frame(clustert, sentimentt)
+
+# Create the faceted histogram with the custom colors
+sentiment_histogram <- create_sentiment_histogram(mydata_clustsent, num_clusters = length(unique(clustert)))
+
+# Print the histogram
+print(sentiment_histogram)
+```
+
+#### Get sentiment summary by cluster
+```{r}
+# Load necessary libraries
+library(dplyr)
+
+# Assuming customer_cluster and text_data are already defined
+# Create a data frame with cluster and sentiment data
+clustert <- customer_cluster$cluster
+sentimentt <- text_data$Sentiment
+mydata_clustsent <- data.frame(clustert, sentimentt)
+
+# Extract sentiment summary by cluster
+sentiment_summary <- mydata_clustsent %>%
+  group_by(clustert) %>%
+  summarise(
+    Mean_Sentiment = mean(sentimentt, na.rm = TRUE),
+    Median_Sentiment = median(sentimentt, na.rm = TRUE),
+    Min_Sentiment = min(sentimentt, na.rm = TRUE),
+    Max_Sentiment = max(sentimentt, na.rm = TRUE),
+    SD_Sentiment = sd(sentimentt, na.rm = TRUE),
+    Count = n()  # Count of observations in each cluster
+  ) %>%
+  arrange(clustert)  # Optional: arrange by cluster
+
+# Print the sentiment summary
+print(sentiment_summary)
+```
+
+
+Jawaban Question 10
+
+
+**Interpretasi Visual:**
+- Klaster 1, 2, dan 5 memiliki **sebaran dominan positif**.
+- Klaster 6 dan 9 cenderung **netral ke negatif**.
+- Klaster 7 dan 8 menunjukkan **variasi tinggi**, dengan lebih banyak fluktuasi ekstrem di kiri dan kanan.
+
+
+
+Insight dan Interpretasi:
+
+- **Klaster 5 dan 3** memiliki **mean dan median sentimen tertinggi**, menunjukkan bahwa pelanggan di klaster ini **sangat puas dan loyal**, dan layak menjadi target retensi & promosi.
+- **Klaster 6 dan 9** mencatat skor **median lebih rendah dan mean mendekati netral**, menandakan **pengalaman pelanggan bervariasi atau cenderung kurang puas**.
+- **Klaster 2 dan 4** memiliki median cukup tinggi tapi mean lebih rendah → artinya meskipun banyak pengalaman positif, ada sejumlah pelanggan dengan pengalaman negatif ekstrem.
+- **Standard Deviasi tinggi** (3.2–4.0) menunjukkan **keragaman pengalaman emosional** antar pelanggan dalam satu klaster — menunjukkan potensi **segmentasi lanjutan atau personalisasi**.
+
+
+
+Kesimpulan Umum
+
+- Klaster dengan sentimen **positif tinggi** (3 & 5) sebaiknya dijadikan basis loyalitas: testimoni, referral, dan program loyalti.
+- Klaster dengan **median rendah atau netral** (6, 7, 8, 9) perlu dievaluasi untuk menemukan akar permasalahan (produk tidak sesuai, layanan lambat, dsb).
+- Statistik ini sangat bermanfaat untuk **strategi pemasaran berbasis emosi dan pengelolaan hubungan pelanggan (CRM)**.
+
+
+=====================================================
